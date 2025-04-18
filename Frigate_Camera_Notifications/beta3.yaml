@@ -90,7 +90,6 @@ blueprint:
         boolean: {}
 
 mode: single
-queue: true
 trigger:
   platform: mqtt
   topic: !input mqtt_topic
