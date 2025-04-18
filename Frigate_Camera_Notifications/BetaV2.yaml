@@ -46,16 +46,18 @@ blueprint:
           sort: false
     loitering_types:
       name: Loitering Detection
-      description: Notify when ‘pending_loitering’ is true or false.
-      default: ["true","false"]
+      description: Notify when `pending_loitering` is true or false.
+      default:
+        - "true"
+        - "false"
       selector:
         select:
+          multiple: true
           options:
             - label: Pending Loitering
               value: "true"
             - label: Non‑Loitering
               value: "false"
-      multiple: true
       selector:
         select:
           options:
