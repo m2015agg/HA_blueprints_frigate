@@ -138,7 +138,7 @@ actions:
               review_id: "{{event['after']['id']}}"
               id: "{{ detections[0] }}"
               pending_loitering: "{{ event['after']['pending_loitering'] | default(false) }}"
-              loitering_satisfied: "{{ input_loitering_types|select('equalto', pending_loitering|string)|list|length>0 }}"
+              loitering_satisfied: "{{ input_loitering_types|select('equalto', pending_loitering)|list|length>0 }}"
           - choose:
               - conditions: "{{initial_delay > 0}}"
                 sequence:
