@@ -79,8 +79,8 @@ blueprint:
       selector:
         text: {}
 
-mode: parallel
-max_exceeded: silent
+mode: single
+queue: true
 trigger:
   platform: mqtt
   topic: !input mqtt_topic
@@ -108,6 +108,7 @@ action:
       severity_ok: "{{ severity in allowed_types }}"
       camera_ok: "{{ camera_name in camera_names }}"
       loiter_ok: "{{ pending_loitering in allowed_loiter }}"
+      first_detection: "{{ event.after.motionless_count == 1 }}"
 
   - condition: template
     value_template: "{{ type_ok and severity_ok and camera_ok }}"
@@ -116,7 +117,7 @@ action:
       - alias: Send Notification
         conditions:
           - condition: template
-            value_template: "{{ loiter_ok }}"
+            value_template: "{{ loiter_ok and (not pending_loitering == 'true' or first_detection) }}"
         sequence:
           - if:
               - condition: template
