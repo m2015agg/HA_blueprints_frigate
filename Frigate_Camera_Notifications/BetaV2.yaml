@@ -86,8 +86,8 @@ trigger_variables:
   mqtt_topic: !input mqtt_topic
 triggers:
 - platform: mqtt
-  topic: '{{ mqtt_topic }}'
-  value_template: "{{ value_json.type in [''new'',''update''] }}"
+  topic: "{{ mqtt_topic }}"
+  value_template: "{{ value_json.type in ["new","update"] }}"
   id: frigate-event
 
 variables:
