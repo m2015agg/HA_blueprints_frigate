@@ -2,8 +2,7 @@ blueprint:
   name: Frigate Notifications (Simple)
   domain: automation
   source_url: "https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/BetaV2.yaml"
-  description: A streamlined Frigate notification blueprint 
-    
+  description: simple frigate alert
   input:
     camera:
       name: Frigate Cameras
@@ -124,4 +123,23 @@ action:
             domain: mobile_app
             type: notify
             title: >
-              {{ 'Loiter
+              {{ 'Loitering' if pending_loitering == 'true' else severity | capitalize }} on {{ camera_name }}
+            message: >
+              {{ 'Object stopped' if pending_loitering == 'true' else severity | capitalize ~ ' detected' }} on {{ camera_name }}
+            data:
+              tag: "{{ event.after.data.detections[0] }}"
+              group: "{{ camera }}-frigate-notification"
+              image: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/thumbnail.jpg"
+              video: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
+              clickAction: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
+              ttl: 0
+              priority: high
+              notification_icon: mdi:car
+              channel: alarm_stream
+              actions:
+                - action: URI
+                  title: View Clip
+                  uri: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
+                - action: URI
+                  title: View Snapshot
+                  uri: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/snapshot.jpg"
