@@ -1,89 +1,94 @@
 blueprint:
   name: Frigate Notifications (Simple)
-  author: mgreen
+  author: SgtBatten
+  domain: automation
   homeassistant:
     min_version: 2024.11.0
   description: |
     ## Frigate Notifications (Simple)
-
+    
     A simplified version of the Frigate Camera Notifications blueprint focusing on core features.
-
+    
     ### Software Version Requirements
       - Minimum Home Assistant Version: 2024.10
       - Minimum Frigate Version: 0.14.0
       - Minimum Frigate Integration Version: 5.7.0
         - **Note:** "Enable the unauthenticated notification event proxy" must be ticked during setup
       - An MQTT broker connected to Home Assistant and Frigate.
-
+    
     ### Required Configuration Options:
       - Frigate Cameras
       - Mobile Device (Running HA Companion App)
-
+    
     ### Features:
       - Select cameras to monitor
       - Choose notification targets
       - Configure event types to monitor
       - Set loitering detection preferences
       - Configure initial notification delay
-
-domain: automation
-source_url: https://github.com/SgtBatten/HA_blueprints/blob/main/Frigate_Camera_Notifications/BetaV2.yaml
-
-input:
-  camera:
-    name: Frigate Cameras
-    selector:
-      entity:
-        filter:
-          integration: frigate
-          domain: camera
-        multiple: true
-  notify_device:
-    name: Mobile Device
-    selector:
-      device:
-        filter:
-          integration: mobile_app
-  event_types:
-    name: Event Types
-    default:
-      - alert
-      - detection
-    selector:
-      select:
-        options:
-          - label: Alerts
-            value: alert
-          - label: Detections
-            value: detection
-        multiple: true
-  loitering_types:
-    name: Loitering Detection
-    default:
-      - true
-      - false
-    selector:
-      select:
-        options:
-          - label: Pending Loitering
-            value: true
-          - label: Non‑Loitering
-            value: false
-        multiple: true
-  initial_delay:
-    name: Delay initial notification
-    default: 0
-    selector:
-      number:
-        min: 0
-        max: 15
-        unit_of_measurement: seconds
-  base_url:
-    name: Base URL (Optional)
-    default: ""
-  mqtt_topic:
-    name: MQTT Topic
-    default: frigate/events
+  source_url: https://github.com/SgtBatten/HA_blueprints/blob/main/Frigate_Camera_Notifications/BetaV2.yaml
+  input:
+    camera:
+      name: Frigate Cameras
+      description: Select the cameras that will trigger notifications.
+      selector:
+        entity:
+          filter:
+            integration: frigate
+            domain: camera
+          multiple: true
+    notify_device:
+      name: Mobile Device
+      description: Select a device that runs the official Home Assistant app to receive notifications.
+      selector:
+        device:
+          filter:
+            integration: mobile_app
+    event_types:
+      name: Event Types
+      description: Select which types of events to monitor.
+      default:
+        - alert
+        - detection
+      selector:
+        select:
+          options:
+            - label: Alerts
+              value: alert
+            - label: Detections
+              value: detection
+          multiple: true
+    loitering_types:
+      name: Loitering Detection
+      description: Select which loitering conditions to monitor.
+      default:
+        - true
+        - false
+      selector:
+        select:
+          options:
+            - label: Pending Loitering
+              value: true
+            - label: Non‑Loitering
+              value: false
+          multiple: true
+    initial_delay:
+      name: Delay initial notification
+      description: How long to delay the first notification for each event.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 15
+          unit_of_measurement: seconds
+    base_url:
+      name: Base URL (Optional)
+      description: The external URL for your Home Assistant instance. Required for video clips.
+      default: ""
+    mqtt_topic:
+      name: MQTT Topic
+      description: The MQTT topic Frigate publishes events on (usually `frigate/events`).
+      default: frigate/events
 
 mode: parallel
 
@@ -93,32 +98,32 @@ trigger_variables:
 trigger:
   - platform: mqtt
     topic: "{{ mqtt_topic }}"
-    # no payload filter – we capture both "new" & "update"
+    # catch both “new” and “update” events
     value_template: >
       {% set t = value_json.get('type') %}
-      {{ t if t in ['new','update'] else None }}
+      {{ t if t in ['new','update'] else none }}
     id: frigate-event
 
 variables:
   input_camera: !input camera
   input_camera_name: >-
-    {{ input_camera
-       | expand
-       | map(attribute='attributes.camera_name')
+    {{ input_camera 
+       | expand 
+       | map(attribute='attributes.camera_name') 
        | list }}
   camera: >-
-    {{ trigger.payload_json.after.camera
+    {{ trigger.payload_json.after.camera 
        if trigger.id == 'frigate-event' else '' }}
   camera_name: >-
     {{ camera.replace('_',' ') | title }}
   input_event_types: !input event_types
   event_type: >-
-    {{ trigger.payload_json.type
+    {{ trigger.payload_json.type 
        if trigger.id == 'frigate-event' else '' }}
   input_loitering_types: !input loitering_types
-  base_url: >-
-    {{ (input_base_url.rstrip('/')) if input_base_url else '' }}
   input_base_url: !input base_url
+  base_url: >-
+    {{ input_base_url.rstrip('/') if input_base_url else '' }}
   initial_delay: !input initial_delay
 
 condition:
@@ -145,7 +150,7 @@ action:
           - variables:
               event: "{{ trigger.payload_json }}"
               id: >-
-                {{ (event.after.data.detections|first) }}
+                {{ (event.after.data.detections | first) }}
               pending_loitering: >-
                 {{ event.after.pending_loitering | default(false) }}
               loitering_satisfied: >-
@@ -189,7 +194,4 @@ action:
                         - action: URI
                           title: "View Snapshot"
                           uri: >-
-                            {{ base_url }}/api/frigate/notifications/{{ id }}/snapshot.jpgi/frigate/notifications/{{id}}/{{camera}}/clip.mp4"
-                        - action: URI
-                          title: "View Snapshot"
-                          uri: "{{base_url}}/api/frigate/notifications/{{id}}/snapshot.jpg"
+                            {{ base_url }}/api/frigate/notifications/{{ id }}/snapshot.jpg
