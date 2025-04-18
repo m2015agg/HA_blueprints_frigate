@@ -9,7 +9,7 @@ blueprint:
       - Loitering detection
       - Initial notification delay
       - iOS mobile_app notifications
-  source_url: https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/BetaV2.yaml
+  source_url: "https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/BetaV2.yaml"
   homeassistant:
     min_version: 2024.11.0
 
