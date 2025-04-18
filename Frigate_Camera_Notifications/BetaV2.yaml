@@ -145,7 +145,7 @@ action:
                       seconds: "{{ init_delay }}"
 
           # the actual mobile_app notify call
-          - device_id: "{{ notify_device }}"
+          - device_id: !input notify_device
             domain: mobile_app
             type: notify
             title: >-
