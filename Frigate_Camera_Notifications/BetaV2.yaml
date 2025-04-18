@@ -82,12 +82,11 @@ blueprint:
 mode: parallel
 trigger_variables:
   mqtt_topic: !input mqtt_topic
-trigger:
-- platform: mqtt
-  topic: '{{ mqtt_topic }}'
-  payload: new
-  value_template: '{{ value_json["type"] }}'
-  id: frigate-event
+triggers:
+  - platform: mqtt
+    topic: "{{ mqtt_topic }}"
+    value_template: "{{ value_json.type in ['alert', 'detection'] }}"
+    id: frigate-event
 
 variables:
   # Inputs from the UI
