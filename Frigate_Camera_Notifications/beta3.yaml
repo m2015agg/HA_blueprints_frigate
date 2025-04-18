@@ -158,6 +158,8 @@ action:
         Camera Names: {{ camera_names }}
         Event ID: {{ event_id }}
         Notified Events: {{ this.attributes.get('notified_events', []) }}
+        Alert Once: {{ alert_once }}
+        Already Notified: {{ event_id in this.attributes.get('notified_events', []) }}
         Loitering Details:
         - Pending Loitering: {{ pending_loitering }}
         - Motionless Time: {{ motionless_time }}
@@ -174,7 +176,7 @@ action:
         value_template: "{{ not alert_once }}"
       - condition: template
         value_template: >
-          {{ not this.attributes.get('notified_events', [])|select('eq', event_id)|list|count }}
+          {{ not (event_id in this.attributes.get('notified_events', [])) }}
 
   - choose:
       - alias: Send Notification
@@ -202,7 +204,7 @@ action:
             data:
               tag: '{{ event.after.id }}'
               group: '{{ camera }}-frigate-notification'
-              image: '{{ base_url }}/api/frigate/notifications/{{ event.after.id }}/thumbnail.jpg'
+              image: '{{ base_url }}/api/frigate/notifications/{{ event.after.id }}/snapshot.jpg'
               video: '{{ base_url }}/api/frigate/notifications/{{ event.after.id }}/{{ camera }}/clip.mp4'
               clickAction: '{{ base_url }}/api/frigate/notifications/{{ event.after.id }}/{{ camera }}/clip.mp4'
               ttl: 0
@@ -224,6 +226,7 @@ action:
                 zones: "{{ event.after.current_zones }}"
                 has_clip: "{{ event.after.has_clip }}"
                 has_snapshot: "{{ event.after.has_snapshot }}"
+                snapshot_time: "{{ event.after.snapshot.frame_time }}"
 
   - service: automation.set_variables
     target:
