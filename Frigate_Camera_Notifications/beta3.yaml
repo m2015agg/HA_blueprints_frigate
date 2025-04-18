@@ -146,12 +146,18 @@ action:
         Allowed Types: {{ allowed_types }}
         Main Condition: {{ type_ok and severity_ok and camera_ok and not false_positive }}
         Notification Condition: {{ loiter_ok and (
-          (pending_loitering == 'true' and (first_detection or motionless_time | int > 10000)) or
+          (pending_loitering == 'true' and (first_detection or motionless_time | int > 100)) or
           (pending_loitering == 'false')
         ) }}
         Camera Names: {{ camera_names }}
         Event ID: {{ event_id }}
         Notified Events: {{ this.attributes.get('notified_events', []) }}
+        Loitering Details:
+        - Pending Loitering: {{ pending_loitering }}
+        - Motionless Time: {{ motionless_time }}
+        - First Detection: {{ first_detection }}
+        - Threshold: 100
+        - Should Notify: {{ pending_loitering == 'true' and (first_detection or motionless_time | int > 100) }}
 
   - condition: template
     value_template: "{{ type_ok and severity_ok and camera_ok and not false_positive }}"
@@ -170,7 +176,7 @@ action:
           - condition: template
             value_template: >
               {{ loiter_ok and (
-                (pending_loitering == 'true' and (first_detection or motionless_time | int > 10000)) or
+                (pending_loitering == 'true' and (first_detection or motionless_time | int > 100)) or
                 (pending_loitering == 'false')
               ) }}
         sequence:
