@@ -94,22 +94,22 @@ blueprint:
 mode: parallel
 trigger_variables:
   mqtt_topic: !input mqtt_topic
-triggers:
-  - trigger: mqtt
-    topic: "{{mqtt_topic}}"
-    payload: "new"
-    value_template: "{{value_json['type']}}"
+
+trigger:
+  - platform: mqtt
+    topic: "{{ mqtt_topic }}"
+    value_template: "{{ value_json['type'] if value_json.get('type') == 'new' else None }}"
     id: frigate-event
 
 variables:
   input_camera: !input camera
-  input_camera_name: "{{input_camera|expand|map(attribute='attributes.camera_name', default='none')|list}}"
-  camera: "{{trigger.payload_json['after']['camera'] if trigger.id == 'frigate-event'}}"
+  input_camera_name: "{{ input_camera|expand|map(attribute='attributes.camera_name', default='none')|list }}"
+  camera: "{{ trigger.payload_json['after']['camera'] if trigger.id == 'frigate-event' }}"
   camera_name: "{{ camera | replace('_', ' ') | title }}"
   input_event_types: !input event_types
-  event_type: "{{trigger.payload_json['type'] if trigger.id == 'frigate-event'}}"
+  event_type: "{{ trigger.payload_json['type'] if trigger.id == 'frigate-event' }}"
   input_loitering_types: !input loitering_types
-  base_url: "{{ input_base_url.rstrip('/')}}"
+  base_url: "{{ input_base_url.rstrip('/') }}"
   input_base_url: !input base_url
   initial_delay: !input initial_delay
 
@@ -135,29 +135,29 @@ actions:
           - variables:
               event: "{{ trigger.payload_json }}"
               detections: "{{ event['after']['data']['detections'] }}"
-              review_id: "{{event['after']['id']}}"
+              review_id: "{{ event['after']['id'] }}"
               id: "{{ detections[0] }}"
               pending_loitering: "{{ event['after']['pending_loitering'] | default(false) | string }}"
               loitering_satisfied: "{{ input_loitering_types|select('equalto', pending_loitering)|list|length>0 }}"
           - choose:
-              - conditions: "{{initial_delay > 0}}"
+              - conditions: "{{ initial_delay > 0 }}"
                 sequence:
                   - delay:
-                      seconds: "{{initial_delay}}"
+                      seconds: "{{ initial_delay }}"
           - choose:
               - conditions: "{{ loitering_satisfied }}"
                 sequence:
                   - device_id: !input notify_device
                     domain: mobile_app
                     type: notify
-                    title: "{{ 'Loitering' if pending_loitering else 'Detection' }} on {{ camera_name }}"
-                    message: "{{ 'Vehicle stopped' if pending_loitering else 'Vehicle detected' }} on {{ camera_name }}"
+                    title: "{{ 'Loitering' if pending_loitering == 'true' else 'Detection' }} on {{ camera_name }}"
+                    message: "{{ 'Vehicle stopped' if pending_loitering == 'true' else 'Vehicle detected' }} on {{ camera_name }}"
                     data:
                       tag: "{{ id }}"
                       group: "{{ camera }}-frigate-notification"
-                      image: "{{base_url}}/api/frigate/notifications/{{id}}/thumbnail.jpg"
-                      video: "{{base_url}}/api/frigate/notifications/{{id}}/{{camera}}/clip.mp4"
-                      clickAction: "{{base_url}}/api/frigate/notifications/{{id}}/{{camera}}/clip.mp4"
+                      image: "{{ base_url }}/api/frigate/notifications/{{ id }}/thumbnail.jpg"
+                      video: "{{ base_url }}/api/frigate/notifications/{{ id }}/{{ camera }}/clip.mp4"
+                      clickAction: "{{ base_url }}/api/frigate/notifications/{{ id }}/{{ camera }}/clip.mp4"
                       ttl: 0
                       priority: high
                       notification_icon: "mdi:car"
@@ -165,7 +165,7 @@ actions:
                       actions:
                         - action: URI
                           title: "View Clip"
-                          uri: "{{base_url}}/api/frigate/notifications/{{id}}/{{camera}}/clip.mp4"
+                          uri: "{{ base_url }}/api/frigate/notifications/{{ id }}/{{ camera }}/clip.mp4"
                         - action: URI
                           title: "View Snapshot"
-                          uri: "{{base_url}}/api/frigate/notifications/{{id}}/snapshot.jpg" 
+                          uri: "{{ base_url }}/api/frigate/notifications/{{ id }}/snapshot.jpg"
