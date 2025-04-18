@@ -1,13 +1,13 @@
 blueprint:
   name: Frigate Notifications (Simple)
   domain: automation
-  author: SgtBatten
+  author: mgreen
   homeassistant:
     min_version: 2024.11.0
   description: |
     ## Frigate Notifications (Simple)
     …
-  source_url: https://github.com/SgtBatten/HA_blueprints/blob/main/Frigate_Camera_Notifications/BetaV2.yaml
+  https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/BetaV2.yaml
 
   input:
     camera:
