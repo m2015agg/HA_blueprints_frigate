@@ -65,12 +65,10 @@ blueprint:
             device_class: mobile_app
     base_url:
       name: Base URL (Optional)
-      description: |
-        The external URL for your Home Assistant instance.
-        Recommended for iOS.
-        Must include the scheme i.e http:// or https://
-        Examples: http://192.168.1.25:8123   https://homeassistant.mydomain.com
-      default: ""
+      description: The base URL of your Home Assistant instance. Required for iOS notifications.
+      default: ''
+      selector:
+        text:
     mqtt_topic:
       name: MQTT Topic (Advanced)
       description: The MQTT topic Frigate sends review messages in.
