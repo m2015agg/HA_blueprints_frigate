@@ -145,6 +145,10 @@ action:
         Motionless Time: {{ motionless_time }}
         Allowed Types: {{ allowed_types }}
         Main Condition: {{ type_ok and severity_ok and camera_ok and not false_positive }}
+        - Type OK: {{ type_ok }}
+        - Severity OK: {{ severity_ok }}
+        - Camera OK: {{ camera_ok }}
+        - Not False Positive: {{ not false_positive }}
         Notification Condition: {{ loiter_ok and (
           (pending_loitering == 'true' and (first_detection or motionless_time | int > 100)) or
           (pending_loitering == 'false')
