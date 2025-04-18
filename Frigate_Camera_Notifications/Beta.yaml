@@ -23,6 +23,7 @@ blueprint:
     ### Features:
       - Easily select the camera entities or mobile device using a drop-down menu.
       - Configure multiple cameras in one automation. 
+      - Support for loitering detection with configurable delay.
 
       For the full features list visit the [GitHub Repository][1]
 
@@ -48,25 +49,17 @@ blueprint:
           multiple: true
     notify_device:
       name: Mobile Device
-      description: Select a device that runs the official Home Assistant app to receive notifications. If you wish to notify a group of devices and/or Android/Fire TV use the field below to override this selection. This will be ignored in that case but is still required.
+      description: Select a device that runs the official Home Assistant app to receive notifications.
       default: false
       selector:
         device:
           filter:
             integration: mobile_app
-    notify_group:
-      name: Notification Group or Android/Fire TV (Optional)
-      description: |
-        The name of the group or individual TV to send notifications to.
-        If set, this will override the individual devices above.
-
-        Note: If the group contains both mobile devices and TVs, the TV will not display the snapshot unless "TV notifications" is set to true. However, this will stop Android phones from receiving thumbnails.
-      default: ""
     base_url:
       name: Base URL (Optional)
       description: |
         The external URL for your Home Assistant instance.
-        Recommended for iOS and required for Android/Fire TV.
+        Recommended for iOS.
         Must include the scheme i.e http:// or https://
         Examples: http://192.168.1.25:8123   https://homeassistant.mydomain.com
       default: ""
@@ -78,29 +71,6 @@ blueprint:
       name: Client ID (Optional-Advanced)
       description: Used to support multiple instances of Frigate. Leave blank if you don't know what to do.
       default: ""
-    telegram:
-      name: |
-        # Telegram Configuration
-      description: These are Telegram specific Options.
-      icon: mdi:phone-outline
-      collapsed: true
-      input:
-        telegram_base_url:
-          name: Telegram Base URL (Optional)
-          description: |
-            The internal URL for your Home Assistant instance.
-            Used only for telegram integration (For downloading media). Useful when your base URL points to a proxy instance
-            which could be unreachable from your home assistant instance. If unset telegram will use Base URL.
-            Must include the scheme i.e http:// or https://
-            Examples: http://192.168.1.25:8123
-          default: ""
-        notify_telegram_chat_id:
-          name: Telegram Chat ID (Optional)
-          description: |
-            The chat ID to send telegram notifications to.
-            If set, this will override individual devices and groups above. Note: TV (far below) must be set to false.
-            Base URL must start with https since telegram URL buttons only work with https.
-          default: ""
     notification_customisations:
       name: |
         # Notification Customisations
@@ -204,13 +174,10 @@ blueprint:
           name: Initial Attachment
           description: |
             Choose which image or GIF to attach to the initial notification.
-
-            Note: TVs will always get sent the snapshot.
           default: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/thumbnail.jpg"
           selector:
             select:
               options:
-                # format=android converts it to a 2:1 ratio for mobile display.
                 - label: Thumbnail
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/thumbnail.jpg"
                 - label: Snapshot
@@ -223,34 +190,20 @@ blueprint:
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?bbox=1&crop=1"
                 - label: Review GIF
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif"
-                  # this will show the GIF associated with the first object detected by frigate
                 - label: Object 1 Event GIF
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/event_preview.gif"
-                - label: Thumbnail (2:1)
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/thumbnail.jpg?format=android"
-                - label: Snapshot (2:1)
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?format=android"
-                - label: Snapshot with bounding box (2:1)
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?bbox=1&format=android"
-                - label: Snapshot cropped (2:1)
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?crop=1&format=android"
-                - label: Snapshot cropped with bounding box (2:1)
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?bbox=1&crop=1&format=android"
               mode: dropdown
         attachment_2:
           name: Subsequent Attachment (Optional)
           description: |
             Choose which image or GIF to attach to the notification for any updates. It is recommended to enable Final Update
-            Set to None to continue using Initial Attachment for updates. 
-
-            Note: TVs will get sent the snapshot if GIF is selected.
+            Set to None to continue using Initial Attachment for updates.
           default: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/thumbnail.jpg"
           selector:
             select:
               options:
                 - label: None
                   value: ""
-                # format=android converts it to a 2:1 ratio for mobile display.
                 - label: Thumbnail
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/thumbnail.jpg"
                 - label: Snapshot
@@ -263,19 +216,8 @@ blueprint:
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?bbox=1&crop=1"
                 - label: Review GIF
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif"
-                  # this will show the GIF associated with the first object detected by frigate
                 - label: Object 1 Event GIF
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/event_preview.gif"
-                - label: Thumbnail (2:1)
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/thumbnail.jpg?format=android"
-                - label: Snapshot (2:1)
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?format=android"
-                - label: Snapshot with bounding box (2:1)
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?bbox=1&format=android"
-                - label: Snapshot cropped (2:1)
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?crop=1&format=android"
-                - label: Snapshot cropped with bounding box (2:1)
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?bbox=1&crop=1&format=android"
               mode: dropdown
         video:
           name: Video (Optional)
@@ -287,14 +229,12 @@ blueprint:
                 - label: None
                   value: ""
                 - label: Review GIF
-                  # compared to attachments above, we add format=ts to allow HA to interpret the GIFs as videos, otherwise it fails.
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts"
                 - label: Object 1 Event GIF
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/event_preview.gif?format=ts"
                 - label: Clip mp4
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/{{camera}}/clip.mp4"
                 - label: Clip m3u8 (IOS)
-                  # requires frigate integration 5.7.0+
                   value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/{{camera}}/master.m3u8"
               mode: dropdown
         final_update:
@@ -303,82 +243,6 @@ blueprint:
           default: false
           selector:
             boolean:
-        color:
-          name: Notification Color - Android and TV only (Optional)
-          description: |
-            Set the color of the notification on your Android mobile device or TV. 
-            TV supports `grey`, `black`, `indigo`, `green`, `red`, `cyan`, `teal`, `amber` or `pink` only.
-          default: "#03a9f4"
-          selector:
-            select:
-              options:
-                - label: Primary (Steelblue)
-                  value: "#03a9f4"
-                - label: Red
-                  value: "#f44336"
-                - label: Pink
-                  value: "#e91e63"
-                - label: Purple
-                  value: "#926bc7"
-                - label: Deep Purple
-                  value: "#6e41ab"
-                - label: Indigo
-                  value: "#3f51b5"
-                - label: Blue
-                  value: "#2196f3"
-                - label: Light Blue
-                  value: "#03a9f4"
-                - label: Cyan
-                  value: "#00bcd4"
-                - label: Teal
-                  value: "#009688"
-                - label: Green
-                  value: "#4caf50"
-                - label: Light Green
-                  value: "#8bc34a"
-                - label: Lime
-                  value: "#cddc39"
-                - label: Yellow
-                  value: "#ffeb3b"
-                - label: Amber
-                  value: "#ffc107"
-                - label: Orange
-                  value: "#ff9800"
-                - label: Deep Orange
-                  value: "#ff5722"
-                - label: Brown
-                  value: "#795548"
-                - label: Light Grey
-                  value: "#bdbdbd"
-                - label: Grey
-                  value: "#9e9e9e"
-                - label: Dark Grey
-                  value: "#606060"
-                - label: Blue Grey
-                  value: "#607d8b"
-                - label: Black
-                  value: "#000000"
-                - label: White
-                  value: "#ffffff"
-        icon:
-          name: Notification Icon (Optional)
-          description: Change the icon that displays on the notification. You can enter a single icon or create a template like the example given in the dropdown. You must include 'mdi:' in the icon name.
-          default: mdi:homeassistant
-          selector:
-            select:
-              options:
-                - mdi:homeassistant
-                - mdi:cctv
-                - "mdi:{{'account-outline' if label == 'Person' else 'dog' if label == 'Dog' else 'cat' if label == 'Cat' else 'car' if label == 'Car' else 'home-assistant'}}"
-              custom_value: true
-        group:
-          name: Group
-          description: The group name that will determine if notifications are grouped on your mobile device. If you want notifications grouped by camera, ensure it contains {{camera}}
-          default: "{{camera}}-frigate-notification"
-        tag:
-          name: Tag
-          description: The Tag is used to identify individual notifications in order to replace them with updated images/text. Default is the Event ID 
-          default: "{{id}}"
         sound:
           name: Notification Sound - iOS only (Optional)
           description: You can specify a sound file on your device that will play for the notifications. You will need to import the sound file into Home Assistant.
@@ -408,23 +272,14 @@ blueprint:
             entity:
               filter:
                 domain: camera
-        android_auto:
-          name: Android Auto
-          description: Show the notification on Android Auto if the receiving device is connected.
-          default: false
-          selector:
-            boolean:
-        sticky:
-          name: Sticky - Android only (Optional)
-          description: |
-            When enabled, the notification will stay active on the device after tapping it and remain there until cleared.
-          default: false
-          selector:
-            boolean:
-        channel:
-          name: Notification Channel - Android only (Optional)
-          description: Create a new channel for notifications to allow custom notification sounds, vibration patterns, and override of Do Not Disturb mode. Configured directly on the device.
-          default: ""
+        group:
+          name: Group
+          description: The group name that will determine if notifications are grouped on your mobile device. If you want notifications grouped by camera, ensure it contains {{camera}}
+          default: "{{camera}}-frigate-notification"
+        tag:
+          name: Tag
+          description: The Tag is used to identify individual notifications in order to replace them with updated images/text. Default is the Event ID 
+          default: "{{id}}"
     filters:
       name: |
         # Filters
@@ -940,6 +795,39 @@ blueprint:
           default: true
           selector:
             boolean:
+    loitering_config:
+      name: |
+        # Loitering Detection
+      description: Configuration options for loitering detection alerts.
+      icon: mdi:timer
+      collapsed: true
+      input:
+        loiter_timer:
+          name: Loitering Delay (seconds)
+          description: |
+            The number of seconds an object must be detected before triggering a loitering alert.
+            Only applies when pending_loitering is true in the MQTT payload.
+          default: 30
+          selector:
+            number:
+              min: 1
+              max: 300
+              step: 1
+              mode: box
+        review_severity:
+          name: Review Severity
+          description: |
+            Select which types of events should trigger notifications.
+            For loitering detection, choose either 'detection' or 'alert'.
+          default: ["detection", "alert"]
+          selector:
+            select:
+              options:
+                - ["detection"]
+                - ["alert"]
+                - ["detection", "alert"]
+              multiple: true
+              mode: list
 mode: parallel
 trigger_variables:
   # severity: !input review_severity
