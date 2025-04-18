@@ -118,11 +118,12 @@ action:
           - condition: template
             value_template: "{{ loiter_ok }}"
         sequence:
-          - choose:
-              - conditions: "{{ init_delay > 0 }}"
-                sequence:
-                  - delay:
-                      seconds: "{{ init_delay }}"
+          - if:
+              - condition: template
+                value_template: "{{ init_delay > 0 }}"
+            then:
+              - delay:
+                  seconds: "{{ init_delay }}"
           - device_id: !input notify_device
             domain: mobile_app
             type: notify
