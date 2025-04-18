@@ -74,8 +74,8 @@ blueprint:
 
     mqtt_topic:
       name: MQTT Topic
-      description: Topic where Frigate publishes review events.
-      default: frigate/reviews
+      description: Topic where Frigate publishes detection events (usually frigate/events).
+      default: frigate/events
       selector:
         text: {}
 
@@ -100,7 +100,7 @@ action:
   - variables:
       event: "{{ trigger.payload_json }}"
       event_type: "{{ event.type }}"
-      severity: "{{ event.after.max_severity }}"
+      severity: "{{ event.after.max_severity | default('detection') }}"
       camera: "{{ event.after.camera }}"
       camera_name: "{{ camera.replace('_',' ') | title }}"
       pending_loitering: "{{ event.after.get('pending_loitering', false) | string | lower }}"
@@ -120,9 +120,41 @@ action:
       camera_ok: "{{ camera_name in camera_names }}"
       loiter_ok: "{{ pending_loitering in allowed_loiter }}"
       first_detection: "{{ event.after.motionless_count == 1 }}"
+      motionless_time: "{{ event.after.motionless_count }}"
+      false_positive: "{{ event.after.false_positive }}"
+      score: "{{ event.after.score }}"
+      label: "{{ event.after.label }}"
+      zones: "{{ event.after.current_zones }}"
+
+  - service: persistent_notification.create
+    data:
+      title: "Debug Info"
+      message: >
+        Event Type: {{ event_type }}
+        Camera: {{ camera_name }}
+        Label: {{ label }}
+        Score: {{ score }}
+        False Positive: {{ false_positive }}
+        Zones: {{ zones }}
+        Type OK: {{ type_ok }}
+        Severity OK: {{ severity_ok }}
+        Camera OK: {{ camera_ok }}
+        Loiter OK: {{ loiter_ok }}
+        Pending Loitering: {{ pending_loitering }}
+        First Detection: {{ first_detection }}
+        Motionless Time: {{ motionless_time }}
+        Allowed Types: {{ allowed_types }}
+        Main Condition: {{ type_ok and severity_ok and camera_ok and not false_positive }}
+        Notification Condition: {{ loiter_ok and (
+          (pending_loitering == 'true' and (first_detection or motionless_time | int > 10000)) or
+          (pending_loitering == 'false')
+        ) }}
+        Camera Names: {{ camera_names }}
+        Event ID: {{ event_id }}
+        Notified Events: {{ this.attributes.get('notified_events', []) }}
 
   - condition: template
-    value_template: "{{ type_ok and severity_ok and camera_ok }}"
+    value_template: "{{ type_ok and severity_ok and camera_ok and not false_positive }}"
 
   - condition: or
     conditions:
@@ -136,7 +168,11 @@ action:
       - alias: Send Notification
         conditions:
           - condition: template
-            value_template: "{{ loiter_ok and (not pending_loitering == 'true' or first_detection) }}"
+            value_template: >
+              {{ loiter_ok and (
+                (pending_loitering == 'true' and (first_detection or motionless_time | int > 10000)) or
+                (pending_loitering == 'false')
+              ) }}
         sequence:
           - if:
               - condition: template
