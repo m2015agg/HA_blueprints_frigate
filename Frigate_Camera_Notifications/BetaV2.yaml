@@ -105,9 +105,9 @@ variables:
   # expand friendly camera names
   camera_names: >
     {{ cameras
-       | expand
-       | map(attribute='attributes.camera_name')
-       | list }}
+      | expand
+      | map(attribute='attributes.camera_name')
+      | list }}
 
   # stash the raw payload
   event:        "{{ trigger.payload_json }}"
@@ -153,10 +153,10 @@ actions:
             type: notify
             title: >
               {{ 'Loitering' if pending_loitering=='true'
-                 else severity | capitalize }} on {{ camera_name }}
+                else severity | capitalize }} on {{ camera_name }}
             message: >
               {{ 'Object stopped' if pending_loitering=='true'
-                 else severity | capitalize ~ ' detected' }} on {{ camera_name }}
+                else severity | capitalize ~ ' detected' }} on {{ camera_name }}
             data:
               tag:            "{{ event.after.data.detections[0] }}"
               group:          "{{ camera }}-frigate-notification"
