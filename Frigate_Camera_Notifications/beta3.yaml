@@ -80,7 +80,7 @@ blueprint:
         text: {}
 
 mode: parallel
-
+max_exceeded: silent
 trigger:
   platform: mqtt
   topic: !input mqtt_topic
