@@ -2,7 +2,7 @@ blueprint:
   name: Frigate Notifications (Simple)
   domain: automation
   source_url: "https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/BetaV2.yaml"
-  description: A streamlined Frigate notification blueprint focusing on:
+  description: A streamlined Frigate notification blueprint 
     
   input:
     camera:
