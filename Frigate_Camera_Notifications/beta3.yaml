@@ -79,6 +79,16 @@ blueprint:
       selector:
         text: {}
 
+    alert_once:
+      name: Alert Once
+      description: >
+        When enabled, only one notification will be sent per event ID.
+        This prevents duplicate notifications for the same object detection event.
+        Recommended to keep enabled to avoid notification spam.
+      default: true
+      selector:
+        boolean: {}
+
 mode: single
 queue: true
 trigger:
@@ -102,6 +112,8 @@ action:
       init_delay: !input initial_delay
       input_base_url: !input base_url
       base_url: "{{ input_base_url.rstrip('/') if input_base_url else '' }}"
+      alert_once: !input alert_once
+      event_id: "{{ event.after.id }}"
       camera_names: >
         {{ cameras | expand | map(attribute='attributes.camera_name') | list }}
       type_ok: "{{ event_type in ['new','update'] }}"
@@ -112,6 +124,14 @@ action:
 
   - condition: template
     value_template: "{{ type_ok and severity_ok and camera_ok }}"
+
+  - condition: or
+    conditions:
+      - condition: template
+        value_template: "{{ not alert_once }}"
+      - condition: template
+        value_template: >
+          {{ not this.attributes.get('notified_events', [])|select('eq', event_id)|list|count }}
 
   - choose:
       - alias: Send Notification
@@ -157,3 +177,10 @@ action:
                 zones: "{{ event.after.current_zones }}"
                 has_clip: "{{ event.after.has_clip }}"
                 has_snapshot: "{{ event.after.has_snapshot }}"
+
+  - service: automation.update
+    target:
+      entity_id: "{{ this.entity_id }}"
+    data:
+      variables:
+        notified_events: "{{ (this.attributes.get('notified_events', []) + [event_id])[-100:] }}"
