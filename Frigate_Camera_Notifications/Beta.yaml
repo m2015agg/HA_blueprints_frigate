@@ -1439,7 +1439,17 @@ actions:
 
                     objects: "{{ event['after']['data']['objects'] }}"
                     objects_satisfied: "{{ not labels|length or labels|select('in', objects)|list|length > 0 or ('person-verified' in objects and 'person' in labels) }}"
-                    #loitering: "{{ loiter_timer and event['before']['motionless_count']/fps/60 < loiter_timer and event['after']['motionless_count']/fps/60 >= loiter_timer }}"
+                    # Check for loitering in two ways:
+                    # 1. Direct flag from Frigate
+                    # 2. Motionless count calculation
+                    # Only consider loitering if it's in one of our specified zones
+                    pending_loitering: "{{ event['after']['pending_loitering'] | default(false) }}"
+                    motionless_seconds: "{{ event['after']['motionless_count'] | default(0) / fps }}"
+                    # Only trigger loitering if:
+                    # 1. We're in a specified zone (if zones are specified)
+                    # 2. The object has been motionless for the specified time
+                    # 3. OR Frigate has flagged it as pending_loitering
+                    loitering: "{{ (pending_loitering or (loiter_timer > 0 and motionless_seconds >= loiter_timer)) and (not zones|length or (zones|select('in', after_zones)|list|length > 0)) }}"
                     home: "{{presence_entity |reject('in', '') |select('is_state', 'home') |list |length != 0 }}"
                     #new_snapshot: "{{ update_thumbnail and event['before']['snapshot']['frame_time'] != event['after']['snapshot']['frame_time'] }}"
                     presence_changed: "{{ presence_entity |reject('in', '') |expand |map(attribute='last_changed') |list |select('gt', as_datetime(event['before']['start_time'])) |list |length != 0 }}"
@@ -1522,7 +1532,7 @@ actions:
                     object_updated: "{{ old_objects | select('in', labels) | list | length  != objects | select('in', labels) | list | length }}"
 
                     # update is used to determine if we should play a sound. if it returns true, we should be silent.
-                    silent_update: "{{ alert_once or (not presence_changed and not zone_updated and not object_updated and not sub_label_updated) }}"
+                    silent_update: "{{ alert_once or (not presence_changed and not zone_updated and not object_updated and not sub_label_updated and not loitering) }}"
 
                     custom_action_auto_multi: !input custom_action_auto_multi
                 - alias: "Debug: Loop Output"
@@ -1535,9 +1545,10 @@ actions:
                             name: Frigate Notification
                             message: |
                               DEBUG (in loop):
-                                Send Notification: {{custom_filter and not home and zones_satisfied and state_satisfied and objects_satisfied and severity_satisfied and ((final_update and type == 'end') or (severity_updated or presence_changed or zone_updated or object_updated or sub_label_updated)) }}
+                                Send Notification: {{custom_filter and not home and zones_satisfied and state_satisfied and objects_satisfied and severity_satisfied and ((final_update and type == 'end') or (severity_updated or presence_changed or zone_updated or object_updated or sub_label_updated or loitering)) }}
                                 Info:
                                   Sub Label: {{sub_labels}},
+                                  Loitering: {{loitering}} (Pending: {{pending_loitering}}, Motionless: {{motionless_seconds}}s),
                                   Image: "{{attachment if not redacted or not base_url else attachment |replace(base_url, 'REDACTED')}}"
                                   Title: {{title}}
                                   Message: {{message}}

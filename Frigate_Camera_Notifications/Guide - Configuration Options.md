@@ -2,63 +2,19 @@
 
 This guide will give more detail about each of the configuration options and provide some troubleshooting tips where appropriate.
 
+## Required Configuration
+
 ### Frigate Cameras
+Select the cameras that will trigger notifications. If you do not see cameras listed in the drop-down, check you have the Frigate integration installed.
 
-This dropdown is automatically filtered to show you just your frigate cameras making the choice very easy. 
-You can select multiple cameras if desired.  
+### Mobile Device
+Select a device that runs the official Home Assistant app to receive notifications. If you wish to notify a group of devices and/or Android/Fire TV use the field below to override this selection. This will be ignored in that case but is still required.
 
-If your dropdown list says "No matching entities found" see this [explanation](https://github.com/SgtBatten/HA_blueprints/issues/12)
-
-This input is mandatory for the automation to function.
-
-### Mobile Device and Notification Group/TV
-This section deals with two input fields. Mobile Device and Notification Group or Android/Fire TV.
-Mobile device is mandatory however, if you enter a Notification Group to telegram Chat ID (see telegram section), these will override the Mobile Device. 
-
-#### Mobile Device
-
-This input is mandatory, even if you intend to notify a seperate group.
-
-This field is filtered to only display devices with the Home assistant companion App installed. If you do not see your mobile device here, you need to install the app on the device. 
-
-#### Notification Group or Android/Fire TV
-
-Rather than sending to a single mobile device, this option allows you to send the notification to a group of mobile devices and also to Android/Fire TVs. You can create [Notify Groups](https://www.home-assistant.io/integrations/group/#notify-groups) with Home assistant. 
-
-Groups can contain a mix of Android, IOS and TV devices. No restrictions. 
-
-Valid inputs are the full service e.g `notify.android_tv`, the entity id without the domain e.g `android_tv` and the friendly name of the group or tv if it matches the entity id e.g `Android TV`.
-
-This will override the Mobile device input.
-
-### Base URL 
-
-The Base URL field is for you to enter the external url of your Home Assistant Install. e.g `https://ha.mydomain.com` or `https://1234567890.ui.nabu.casa/`
-
-The automation will strip the trailing / if you enter it so it makes no difference if you leave it or remove it.
+### Base URL
+The external URL for your Home Assistant instance. Recommended for iOS and required for Android/Fire TV. Must include the scheme i.e http:// or https://
 
 ### MQTT Topic
-Leave this alone if you are not sure what to do. 
-
-This field is for you to customise the MQTT topic. By default frigate sends messages in `frigate/events` and `frigate/reviews`. If you have changed this in your frigate configuration then you need to update this field to reflect the same topic and ending in `/events` or `/reviews` respectively. 
-
-MQTT is no longer required for frigate to work but it is required for the [integration](https://github.com/blakeblackshear/frigate-hass-integration) and for this blueprint. See the [frigate docs](https://docs.frigate.video/configuration/) on how to connect MQTT. 
-
-### Client ID
-
-If you run [multiple instances](https://docs.frigate.video/integrations/home-assistant#multiple-instance-support) of frigate you must configure a [Client ID](https://docs.frigate.video/configuration/) in order to distinguish between them. If you know what you are doing, enter the customised client id here. 
-
-## Telegram COnfiguration
-
-### Telegram Base URL
-
-The internal URL for your Home Assistant instance. Only needed for telegram integration when your base URL points to a proxy instance. Should start with `https://`.
-
-### Telegram Chat ID
-
-The chat ID to send telegram notifications to.
-
-If entered, will override the mobile device and send only to telegram.
+The MQTT topic Frigate sends review messages in.
 
 ## Notification Customisations
 
