@@ -307,6 +307,8 @@ blueprint:
                   value: alert
                 - label: Detections
                   value: detection
+                - label: False Positives
+                  value: false_positive
               multiple: true
         master_condition:
           name: Master Condition (Optional)
@@ -822,18 +824,15 @@ blueprint:
               mode: box
         review_severity:
           name: Review Severity
-          description: |
-            Select which types of events should trigger notifications.
-            For loitering detection, choose either 'detection' or 'alert'.
-          default: ["detection", "alert"]
+          description: Select which types of events will trigger notifications
           selector:
             select:
               options:
-                - ["detection"]
-                - ["alert"]
-                - ["detection", "alert"]
-              multiple: true
-              mode: list
+                - "alert"
+                - "detection"
+                - "false_positive"
+          default: ["detection", "alert"]
+          mode: list
 mode: parallel
 trigger_variables:
   # severity: !input review_severity
