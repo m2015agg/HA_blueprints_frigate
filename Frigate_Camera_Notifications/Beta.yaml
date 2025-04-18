@@ -812,16 +812,9 @@ blueprint:
               max: 300
               step: 1
               mode: box
-        review_severity:
-          name: Review Severity
-          description: Select which types of events will trigger notifications
-          selector:
-            select:
-              options:
-                - "alert"
-                - "detection"
-                - "false_positive"
-              multiple: true
+      # Use the review_severity from the main input section
+      variables:
+        input_severity: !input review_severity
 mode: parallel
 trigger_variables:
   # severity: !input review_severity
