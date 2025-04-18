@@ -48,13 +48,21 @@ blueprint:
             domain: camera
           multiple: true
     notify_device:
-      name: Mobile Device
-      description: Select a device that runs the official Home Assistant app to receive notifications.
-      default: false
+      name: Notify Device
+      description: Select the device to send notifications to. Must be running the Home Assistant app.
       selector:
-        device:
-          filter:
-            integration: mobile_app
+        target:
+          entity:
+            domain: notify
+            device_class: mobile_app
+    notify_group:
+      name: Notify Group
+      description: Select the group to send notifications to. Must be running the Home Assistant app.
+      selector:
+        target:
+          entity:
+            domain: notify
+            device_class: mobile_app
     base_url:
       name: Base URL (Optional)
       description: |
