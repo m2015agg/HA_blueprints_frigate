@@ -4,7 +4,7 @@ blueprint:
   source_url: "https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/Beta3.yaml"
   description: |
     A simplified version of the Frigate Camera Notifications blueprint focusing on core features.
-    Handles both regular detections and loitering events with configurable notification preferences.
+    Handles both regular detections and loitering events with configurable notification preferences. test
 
   input:
     camera:
@@ -100,8 +100,8 @@ action:
       allowed_types: !input event_types
       allowed_loiter: !input loitering_types
       init_delay: !input initial_delay
-      base_url: "{{ input_base_url.rstrip('/') }}"
       input_base_url: !input base_url
+      base_url: "{{ input_base_url.rstrip('/') if input_base_url else '' }}"
       camera_names: >
         {{ cameras | expand | map(attribute='attributes.camera_name') | list }}
       type_ok: "{{ event_type in ['new','update'] }}"
