@@ -147,3 +147,11 @@ action:
                 - action: URI
                   title: View Snapshot
                   uri: "{{ base_url }}/api/frigate/notifications/{{ event.after.id }}/snapshot.jpg"
+              data:
+                event_id: "{{ event.after.id }}"
+                camera: "{{ camera }}"
+                label: "{{ event.after.label }}"
+                score: "{{ event.after.score }}"
+                zones: "{{ event.after.current_zones }}"
+                has_clip: "{{ event.after.has_clip }}"
+                has_snapshot: "{{ event.after.has_snapshot }}"
