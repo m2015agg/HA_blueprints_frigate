@@ -1,8 +1,10 @@
 blueprint:
   name: Frigate Notifications (Simple)
   domain: automation
-  source_url: "https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/BetaV2.yaml"
-  description: short and sweet
+  source_url: "https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/Beta3.yaml"
+  description: |
+    A simplified version of the Frigate Camera Notifications blueprint focusing on core features.
+    Handles both regular detections and loitering events with configurable notification preferences.
 
   input:
     camera:
@@ -16,7 +18,7 @@ blueprint:
 
     notify_device:
       name: Mobile Device
-      description: Choose an iOS device (mobile_app) to receive notifications.
+      description: Choose a device running the Home Assistant mobile app to receive notifications.
       selector:
         device:
           integration: mobile_app
@@ -98,7 +100,8 @@ action:
       allowed_types: !input event_types
       allowed_loiter: !input loitering_types
       init_delay: !input initial_delay
-      base_url: "{{ (!input.base_url).rstrip('/') }}"
+      base_url: "{{ input_base_url.rstrip('/') }}"
+      input_base_url: !input base_url
       camera_names: >
         {{ cameras | expand | map(attribute='attributes.camera_name') | list }}
       type_ok: "{{ event_type in ['new','update'] }}"
@@ -144,4 +147,3 @@ action:
                 - action: URI
                   title: View Snapshot
                   uri: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/snapshot.jpg"
-# Test change
