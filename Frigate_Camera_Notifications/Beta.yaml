@@ -887,7 +887,6 @@ variables:
   cooldown: !input cooldown
   timeout: !input timeout
   loitering: false
-  loiter_timer: !input loiter_timer
   initial_delay: !input initial_delay
   final_delay: !input final_delay
   fps: "{{ states('sensor.' + camera + '_camera_fps')|int(5) }}"
