@@ -300,6 +300,7 @@ blueprint:
           default:
             - alert
             - detection
+            - false_positive
           selector:
             select:
               options:
@@ -831,8 +832,7 @@ blueprint:
                 - "alert"
                 - "detection"
                 - "false_positive"
-          default: ["detection", "alert"]
-          mode: list
+              multiple: true
 mode: parallel
 trigger_variables:
   # severity: !input review_severity
