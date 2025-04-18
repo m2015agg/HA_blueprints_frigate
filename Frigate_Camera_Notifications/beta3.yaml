@@ -114,10 +114,10 @@ action:
       alert_once: !input alert_once
       event_id: "{{ event.after.id }}"
       camera_names: >
-        {{ cameras | expand | map(attribute='name') | list }}
+        {{ cameras | expand | map(attribute='attributes.friendly_name') | list }}
       type_ok: "{{ event_type in ['new','update'] }}"
       severity_ok: "{{ severity in allowed_types }}"
-      camera_ok: "{{ camera in camera_names }}"
+      camera_ok: "{{ camera_name in camera_names }}"
       loiter_ok: "{{ pending_loitering in allowed_loiter }}"
       first_detection: "{{ event.after.motionless_count == 1 }}"
       motionless_time: "{{ event.after.motionless_count }}"
