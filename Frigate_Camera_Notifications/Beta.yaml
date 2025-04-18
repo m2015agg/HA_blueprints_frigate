@@ -293,24 +293,6 @@ blueprint:
       icon: mdi:filter
       collapsed: true
       input:
-        review_severity:
-          name: Event Type
-          description: |
-            Specify the classification of Frigate events to be notified about.
-          default:
-            - alert
-            - detection
-            - false_positive
-          selector:
-            select:
-              options:
-                - label: Alerts
-                  value: alert
-                - label: Detections
-                  value: detection
-                - label: False Positives
-                  value: false_positive
-              multiple: true
         master_condition:
           name: Master Condition (Optional)
           description: Set conditions that will stop the automation from running if the result is false. No other tests will be conducted later. This is a kill switch on initiation.
