@@ -91,45 +91,48 @@ trigger_variables:
 triggers:
   - platform: mqtt
     topic: "{{ mqtt_topic }}"
-    value_template: "{{ value_json.type in ['alert', 'detection'] }}"
+    # only fire on new or update review messages carrying an alert or detection
+    value_template: "{{ value_json.type in ['new','update'] }}"
     id: frigate-event
 
 variables:
-  # Inputs from the UI
-  input_camera:       !input camera
-  input_event_types:  !input event_types
+  # UI inputs
+  input_camera:          !input camera
+  input_event_types:     !input event_types
   input_loitering_types: !input loitering_types
-  initial_delay:      !input initial_delay
-  input_base_url:     !input base_url
+  initial_delay:         !input initial_delay
+  input_base_url:        !input base_url
 
-  # Expand camera names into a simple list
+  # expand friendly camera names for matching
   input_camera_names: >
     {{ input_camera
        | expand
        | map(attribute="attributes.camera_name")
        | list }}
 
-  # Pull values out of the incoming MQTT payload
+  # raw payload
   event:            "{{ trigger.payload_json }}"
   event_type:       "{{ event.type }}"
   severity:         "{{ event.after.severity }}"
   camera:           "{{ event.after.camera }}"
   camera_name:      "{{ camera.replace('_',' ') | title }}"
+
+  # pull pending_loitering and coerce to string
   pending_loitering: >
     {{ event.after.get('pending_loitering', false) | string }}
 
-  # Flags for matching user selections
+  # helper flags
   type_ok:        "{{ event_type in ['new','update'] }}"
   severity_ok:    "{{ severity in input_event_types }}"
   camera_ok:      "{{ camera in input_camera_names }}"
   loiter_ok:      "{{ pending_loitering in input_loitering_types }}"
 
-  # Clean up the base URL once
+  # tidy up base_url once
   base_url:       "{{ input_base_url.rstrip('/') }}"
 
 conditions:
   - condition: template
-    # Only fire on new/update events, matching severity & camera
+    # only fire when new/update + correct severity + correct camera
     value_template: >
       {{ type_ok and severity_ok and camera_ok }}
 
@@ -140,13 +143,14 @@ actions:
           - condition: template
             value_template: "{{ type_ok and severity_ok and camera_ok }}"
         sequence:
-          # Optional initial delay
+          # optional initial delay
           - choose:
               - conditions: "{{ initial_delay > 0 }}"
                 sequence:
                   - delay:
                       seconds: "{{ initial_delay }}"
-          # Only notify if loitering matches the user’s loitering_types
+
+          # only send if loitering matches selection
           - choose:
               - conditions: "{{ loiter_ok }}"
                 sequence:
@@ -162,15 +166,15 @@ actions:
                          else severity | capitalize ~ ' detected' }}
                       on {{ camera_name }}
                     data:
-                      tag:       "{{ event.after.data.detections[0] }}"
-                      group:     "{{ camera }}-frigate-notification"
-                      image:     "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/thumbnail.jpg"
-                      video:     "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
-                      clickAction: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
-                      ttl:       0
-                      priority:  high
+                      tag:            "{{ event.after.data.detections[0] }}"
+                      group:          "{{ camera }}-frigate-notification"
+                      image:          "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/thumbnail.jpg"
+                      video:          "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
+                      clickAction:    "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
+                      ttl:            0
+                      priority:       high
                       notification_icon: "mdi:car"
-                      channel:   "alarm_stream"
+                      channel:        "alarm_stream"
                       actions:
                         - action: URI
                           title: View Clip
