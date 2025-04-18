@@ -5,15 +5,12 @@ blueprint:
   homeassistant:
     min_version: 2024.11.0
   description: |
-    ## Frigate Notifications (Simple)
-
     A streamlined Frigate notification blueprint focusing on:
-
-      - Camera selection  
-      - Event type filtering (alerts, detections)  
-      - Loitering detection  
-      - Initial notification delay  
-      - iOS mobile_app notifications  
+      - Camera selection
+      - Event type filtering (alerts, detections)
+      - Loitering detection
+      - Initial notification delay
+      - iOS mobile_app notifications
   source_url: https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/BetaV2.yaml
 
 input:
@@ -79,7 +76,7 @@ input:
 
   base_url:
     name: Base URL (Optional)
-    description: External URL of your Home Assistant (for clips).
+    description: External URL of your Home Assistant (for clips).
     default: ""
 
   mqtt_topic:
@@ -95,19 +92,18 @@ trigger_variables:
 triggers:
   - platform: mqtt
     topic: "{{ mqtt_topic }}"
-    # only fire on new or update review messages
-    value_template: "{{ value_json.type in ['new','update'] }}"
     id: frigate-event
+    value_template: "{{ value_json.type in ['new','update'] }}"
 
 variables:
   # UI inputs
-  input_camera:         !input camera
-  input_event_types:    !input event_types
+  input_camera:          !input camera
+  input_event_types:     !input event_types
   input_loitering_types: !input loitering_types
-  initial_delay:        !input initial_delay
-  input_base_url:       !input base_url
+  initial_delay:         !input initial_delay
+  input_base_url:        !input base_url
 
-  # Expand friendly camera names
+  # Expand camera names
   input_camera_names: >
     {{ input_camera
        | expand
@@ -125,18 +121,18 @@ variables:
        | string
        | lower }}
 
-  # Pre‑compute matches
+  # Match flags
   type_ok:        "{{ event_type in ['new','update'] }}"
   severity_ok:    "{{ severity in input_event_types }}"
   camera_ok:      "{{ camera in input_camera_names }}"
   loiter_ok:      "{{ pending_loitering in input_loitering_types }}"
 
-  # Tidy up URL
+  # Tidy URL
   base_url:       "{{ input_base_url.rstrip('/') }}"
 
-conditions:
+condition:
   - condition: template
-    # only fire when new/update + correct severity + correct camera
+    # Only fire when new/update + correct severity + correct camera
     value_template: >
       {{ type_ok and severity_ok and camera_ok }}
 
@@ -145,45 +141,42 @@ actions:
       - alias: Frigate Event
         conditions:
           - condition: template
-            value_template: "{{ type_ok and severity_ok and camera_ok }}"
+            value_template: "{{ loiter_ok }}"
         sequence:
 
-          # initial delay
+          # Optional initial delay
           - choose:
               - conditions: "{{ initial_delay > 0 }}"
                 sequence:
                   - delay:
                       seconds: "{{ initial_delay }}"
 
-          # loitering filter
-          - choose:
-              - conditions: "{{ loiter_ok }}"
-                sequence:
-                  - device_id: !input notify_device
-                    domain: mobile_app
-                    type: notify
-                    title: >
-                      {{ 'Loitering' if pending_loitering=='true'
-                         else severity | capitalize }}
-                      on {{ camera_name }}
-                    message: >
-                      {{ 'Object stopped' if pending_loitering=='true'
-                         else severity | capitalize ~ ' detected' }}
-                      on {{ camera_name }}
-                    data:
-                      tag:            "{{ event.after.data.detections[0] }}"
-                      group:          "{{ camera }}-frigate-notification"
-                      image:          "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/thumbnail.jpg"
-                      video:          "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
-                      clickAction:    "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
-                      ttl:            0
-                      priority:       high
-                      notification_icon: mdi:car
-                      channel:        alarm_stream
-                      actions:
-                        - action: URI
-                          title: View Clip
-                          uri:   "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
-                        - action: URI
-                          title: View Snapshot
-                          uri:   "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/snapshot.jpg"
+          # Send notification
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: >
+              {{ 'Loitering' if pending_loitering=='true'
+                 else severity | capitalize }}
+              on {{ camera_name }}
+            message: >
+              {{ 'Object stopped' if pending_loitering=='true'
+                 else severity | capitalize ~ ' detected' }}
+              on {{ camera_name }}
+            data:
+              tag:            "{{ event.after.data.detections[0] }}"
+              group:          "{{ camera }}-frigate-notification"
+              image:          "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/thumbnail.jpg"
+              video:          "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
+              clickAction:    "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
+              ttl:            0
+              priority:       high
+              notification_icon: mdi:car
+              channel:        alarm_stream
+              actions:
+                - action: URI
+                  title: View Clip
+                  uri:   "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
+                - action: URI
+                  title: View Snapshot
+                  uri:   "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/snapshot.jpg"
