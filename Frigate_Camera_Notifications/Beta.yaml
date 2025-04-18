@@ -412,6 +412,21 @@ blueprint:
       icon: mdi:filter
       collapsed: true
       input:
+        review_severity:
+          name: Event Type
+          description: |
+            Specify the classification of Frigate events to be notified about.
+          default:
+            - alert
+            - detection
+          selector:
+            select:
+              options:
+                - label: Alerts
+                  value: alert
+                - label: Detections
+                  value: detection
+              multiple: true
         master_condition:
           name: Master Condition (Optional)
           description: Set conditions that will stop the automation from running if the result is false. No other tests will be conducted later. This is a kill switch on initiation.
@@ -1902,25 +1917,3 @@ actions:
                                     target:
                                       entity_id: "{{tts_helper}}"
               until: "{{ not wait.trigger or wait.trigger.payload_json['type'] == 'end' }}"
-
-    loitering_config:
-      name: |
-        # Loitering Configuration
-      description: Configure loitering detection settings
-      icon: mdi:timer
-      collapsed: true
-      input:
-        loiter_timer:
-          name: Loitering Delay (seconds)
-          description: |
-            The number of seconds an object must be detected before triggering a loitering alert.
-            Only applies when pending_loitering is true in the MQTT payload.
-          default: 30
-          selector:
-            number:
-              min: 1
-              max: 300
-              step: 1
-              mode: box
-      variables:
-        input_severity: !input review_severity
