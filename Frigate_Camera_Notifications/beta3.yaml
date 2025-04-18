@@ -91,7 +91,7 @@ action:
   - variables:
       event: "{{ trigger.payload_json }}"
       event_type: "{{ event.type }}"
-      severity: "{{ event.after.severity }}"
+      severity: "{{ event.after.max_severity }}"
       camera: "{{ event.after.camera }}"
       camera_name: "{{ camera.replace('_',' ') | title }}"
       pending_loitering: "{{ event.after.get('pending_loitering', false) | string | lower }}"
