@@ -78,29 +78,6 @@ blueprint:
       name: Client ID (Optional-Advanced)
       description: Used to support multiple instances of Frigate. Leave blank if you don't know what to do.
       default: ""
-    telegram:
-      name: |
-        # Telegram Configuration
-      description: These are Telegram specific Options.
-      icon: mdi:phone-outline
-      collapsed: true
-      input:
-        telegram_base_url:
-          name: Telegram Base URL (Optional)
-          description: |
-            The internal URL for your Home Assistant instance.
-            Used only for telegram integration (For downloading media). Useful when your base URL points to a proxy instance
-            which could be unreachable from your home assistant instance. If unset telegram will use Base URL.
-            Must include the scheme i.e http:// or https://
-            Examples: http://192.168.1.25:8123
-          default: ""
-        notify_telegram_chat_id:
-          name: Telegram Chat ID (Optional)
-          description: |
-            The chat ID to send telegram notifications to.
-            If set, this will override individual devices and groups above. Note: TV (far below) must be set to false.
-            Base URL must start with https since telegram URL buttons only work with https.
-          default: ""
     notification_customisations:
       name: |
         # Notification Customisations
@@ -1246,13 +1223,6 @@ actions:
                   - alias: "Send Notification"
                     sequence:
                       - choose:
-                          - conditions: "{{ telegram }}"
-                            sequence:
-                              - action: telegram_bot.send_photo
-                                data:
-                                  target: "{{telegram_chat_id}}"
-                                  caption: "{{message}}"
-                                  url: "{{attachment|replace( base_url, telegram_base_url )}}"
                           - conditions: "{{ not notify_group_target }}"
                             sequence:
                               - device_id: !input notify_device
@@ -1681,47 +1651,6 @@ actions:
                         - alias: "Update Notification"
                           sequence:
                             - choose:
-                                - conditions: "{{ telegram }}"
-                                  sequence:
-                                    - choose:
-                                        - conditions:
-                                            - "{{ event['type'] == 'end' }}"
-                                            - "{{ video | length > 0 }}"
-                                          sequence:
-                                            - action: telegram_bot.send_video
-                                              data:
-                                                target: "{{telegram_chat_id}}"
-                                                caption: "{{message}}"
-                                                url: "{{ video | replace(base_url, telegram_base_url) }}"
-                                                inline_keyboard:
-                                                  - [
-                                                      [
-                                                        "{{button_1}}",
-                                                        "{{url_1}}",
-                                                      ],
-                                                      [
-                                                        "{{button_2}}",
-                                                        "{{url_2}}",
-                                                      ],
-                                                    ]
-                                                  - [
-                                                      [
-                                                        "{{button_3}}",
-                                                        "{{url_3}}",
-                                                      ],
-                                                    ]
-                                      default:
-                                        - action: telegram_bot.send_photo
-                                          data:
-                                            target: "{{telegram_chat_id}}"
-                                            caption: "{{message}}"
-                                            url: "{{attachment | replace(base_url,telegram_base_url)}}"
-                                            inline_keyboard:
-                                              - [
-                                                  ["{{button_1}}", "{{url_1}}"],
-                                                  ["{{button_2}}", "{{url_2}}"],
-                                                ]
-                                              - [["{{button_3}}", "{{url_3}}"]]
                                 - conditions: "{{ not notify_group_target }}"
                                   sequence:
                                     - device_id: !input notify_device
