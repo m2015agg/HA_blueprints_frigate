@@ -144,3 +144,4 @@ action:
                 - action: URI
                   title: View Snapshot
                   uri: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/snapshot.jpg"
+# Test change
