@@ -88,7 +88,7 @@ mode: parallel
 trigger:
   - platform: mqtt
     topic: "{{ mqtt_topic }}"
-    id: frigate_event
+    id: frigate-event
     value_template: "{{ value_json.type in ['new','update'] }}"
 
 variables:
