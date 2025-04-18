@@ -131,11 +131,11 @@ action:
             message: >
               {{ 'Object stopped' if pending_loitering == 'true' else severity | capitalize ~ ' detected' }} on {{ camera_name }}
             data:
-              tag: "{{ event.after.data.detections[0] }}"
+              tag: "{{ event.after.id }}"
               group: "{{ camera }}-frigate-notification"
-              image: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/thumbnail.jpg"
-              video: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
-              clickAction: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
+              image: "{{ base_url }}/api/frigate/notifications/{{ event.after.id }}/thumbnail.jpg"
+              video: "{{ base_url }}/api/frigate/notifications/{{ event.after.id }}/{{ camera }}/clip.mp4"
+              clickAction: "{{ base_url }}/api/frigate/notifications/{{ event.after.id }}/{{ camera }}/clip.mp4"
               ttl: 0
               priority: high
               notification_icon: mdi:car
@@ -143,7 +143,7 @@ action:
               actions:
                 - action: URI
                   title: View Clip
-                  uri: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/{{ camera }}/clip.mp4"
+                  uri: "{{ base_url }}/api/frigate/notifications/{{ event.after.id }}/{{ camera }}/clip.mp4"
                 - action: URI
                   title: View Snapshot
-                  uri: "{{ base_url }}/api/frigate/notifications/{{ event.after.data.detections[0] }}/snapshot.jpg"
+                  uri: "{{ base_url }}/api/frigate/notifications/{{ event.after.id }}/snapshot.jpg"
