@@ -497,17 +497,6 @@ blueprint:
               max: 3600
               min: 0
               unit_of_measurement: minutes
-        loiter_timer:
-          name: Loitering Notifications (Optional)
-          description: >
-            Sends new loitering notification if a stationary object is detected for longer
-            than the specified time. 0 is off and will not send notifications.
-          default: 0
-          selector:
-            number:
-              max: 3600
-              min: 0
-              unit_of_measurement: seconds
         initial_delay:
           name: Delay initial notification (Optional)
           description: |
