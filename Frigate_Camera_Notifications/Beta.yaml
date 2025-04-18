@@ -795,8 +795,8 @@ blueprint:
             boolean:
     loitering_config:
       name: |
-        # Loitering Detection
-      description: Configuration options for loitering detection alerts.
+        # Loitering Configuration
+      description: Configure loitering detection settings
       icon: mdi:timer
       collapsed: true
       input:
