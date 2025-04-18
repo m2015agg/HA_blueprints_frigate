@@ -63,15 +63,15 @@ blueprint:
       name: Loitering Detection
       description: Select which loitering conditions to monitor.
       default:
-        - true
-        - false
+        - "true"
+        - "false"
       selector:
         select:
           options:
             - label: Pending Loitering
-              value: true
+              value: "true"
             - label: Non-Loitering
-              value: false
+              value: "false"
           multiple: true
     initial_delay:
       name: Delay initial notification
@@ -137,7 +137,7 @@ actions:
               detections: "{{ event['after']['data']['detections'] }}"
               review_id: "{{event['after']['id']}}"
               id: "{{ detections[0] }}"
-              pending_loitering: "{{ event['after']['pending_loitering'] | default(false) }}"
+              pending_loitering: "{{ event['after']['pending_loitering'] | default(false) | string }}"
               loitering_satisfied: "{{ input_loitering_types|select('equalto', pending_loitering)|list|length>0 }}"
           - choose:
               - conditions: "{{initial_delay > 0}}"
