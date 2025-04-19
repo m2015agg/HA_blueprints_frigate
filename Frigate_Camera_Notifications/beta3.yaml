@@ -114,10 +114,37 @@ action:
       alert_once: !input alert_once
       event_id: "{{ event.after.id }}"
       camera_names: >
-        {{ cameras | expand | map(attribute='attributes.friendly_name') | list }}
+        {% set names = [] %}
+        {% for cam in cameras | expand %}
+          {% set friendly_name = cam.attributes.friendly_name | default('') %}
+          {% set entity_id = cam.entity_id.split('.')[1] %}
+          {% set formatted_name = friendly_name if friendly_name else entity_id.replace('_', ' ').title() %}
+          {% set _ = names.append({
+            'friendly_name': friendly_name,
+            'entity_id': entity_id,
+            'formatted_name': formatted_name,
+            'raw': cam
+          }) %}
+        {% endfor %}
+        {{ names }}
       type_ok: "{{ event_type in ['new','update'] }}"
       severity_ok: "{{ severity in allowed_types }}"
-      camera_ok: "{{ camera_name in camera_names }}"
+      camera_ok: >
+        {% set camera_matches = [] %}
+        {% for cam in camera_names %}
+          {% set match = (
+            camera == cam.entity_id or
+            camera_name == cam.formatted_name or
+            camera == cam.friendly_name
+          ) %}
+          {% set _ = camera_matches.append({
+            'entity_id': cam.entity_id,
+            'friendly_name': cam.friendly_name,
+            'formatted_name': cam.formatted_name,
+            'matches': match
+          }) %}
+        {% endfor %}
+        {{ camera_matches | selectattr('matches') | list | length > 0 }}
       loiter_ok: "{{ pending_loitering in allowed_loiter }}"
       first_detection: "{{ event.after.motionless_count == 1 }}"
       motionless_time: "{{ event.after.motionless_count }}"
@@ -131,41 +158,49 @@ action:
       title: "Debug Info"
       message: >
         Event Type: {{ event_type }}
-        Camera: {{ camera }}
-        Camera Name: {{ camera_name }}
-        Selected Cameras: {{ camera_names }}
-        Label: {{ label }}
-        Score: {{ score }}
-        False Positive: {{ false_positive }}
-        Zones: {{ zones }}
-        Type OK: {{ type_ok }}
-        Severity OK: {{ severity_ok }}
-        Camera OK: {{ camera_ok }}
-        Loiter OK: {{ loiter_ok }}
-        Pending Loitering: {{ pending_loitering }}
-        First Detection: {{ first_detection }}
-        Motionless Time: {{ motionless_time }}
-        Allowed Types: {{ allowed_types }}
-        Main Condition: {{ type_ok and severity_ok and camera_ok and not false_positive }}
+        Camera Details:
+        - Raw Camera from Frigate: {{ camera }}
+        - Formatted Camera Name: {{ camera_name }}
+        - Camera OK: {{ camera_ok }}
+        - Camera Matches:
+          {% for match in camera_matches %}
+          - Entity ID: {{ match.entity_id }}
+            Friendly Name: {{ match.friendly_name }}
+            Formatted Name: {{ match.formatted_name }}
+            Matches: {{ match.matches }}
+          {% endfor %}
+        Event Details:
+        - Label: {{ label }}
+        - Score: {{ score }}
+        - False Positive: {{ false_positive }}
+        - Zones: {{ zones }}
+        - Type OK: {{ type_ok }}
+        - Severity OK: {{ severity_ok }}
+        - Severity: {{ severity }}
+        - Allowed Types: {{ allowed_types }}
+        Loitering Details:
+        - Pending Loitering: {{ pending_loitering }}
+        - Loiter OK: {{ loiter_ok }}
+        - Allowed Loiter: {{ allowed_loiter }}
+        - First Detection: {{ first_detection }}
+        - Motionless Time: {{ motionless_time }}
+        - Threshold: 100
+        - Should Notify: {{ pending_loitering == 'true' and (first_detection or motionless_time | int > 100) }}
+        Notification Conditions:
+        - Main Condition: {{ type_ok and severity_ok and camera_ok and not false_positive }}
         - Type OK: {{ type_ok }}
         - Severity OK: {{ severity_ok }}
         - Camera OK: {{ camera_ok }}
         - Not False Positive: {{ not false_positive }}
-        Notification Condition: {{ loiter_ok and (
+        - Notification Condition: {{ loiter_ok and (
           (pending_loitering == 'true' and (first_detection or motionless_time | int > 100)) or
           (pending_loitering == 'false')
         ) }}
-        Camera Names: {{ camera_names }}
-        Event ID: {{ event_id }}
-        Notified Events: {{ this.attributes.get('notified_events', []) }}
-        Alert Once: {{ alert_once }}
-        Already Notified: {{ event_id in this.attributes.get('notified_events', []) }}
-        Loitering Details:
-        - Pending Loitering: {{ pending_loitering }}
-        - Motionless Time: {{ motionless_time }}
-        - First Detection: {{ first_detection }}
-        - Threshold: 100
-        - Should Notify: {{ pending_loitering == 'true' and (first_detection or motionless_time | int > 100) }}
+        Event Tracking:
+        - Event ID: {{ event_id }}
+        - Notified Events: {{ this.attributes.get('notified_events', []) }}
+        - Alert Once: {{ alert_once }}
+        - Already Notified: {{ event_id in this.attributes.get('notified_events', []) }}
 
   - condition: template
     value_template: "{{ type_ok and severity_ok and camera_ok and not false_positive }}"
@@ -227,9 +262,8 @@ action:
                 pending_loitering: "{{ pending_loitering }}"
                 first_detection: "{{ first_detection }}"
 
-  - service: automation.set_variables
+  - service: input_text.set_value
     target:
-      entity_id: "{{ this.entity_id }}"
+      entity_id: "input_text.frigate_notified_events"
     data:
-      variables:
-        notified_events: "{{ (this.attributes.get('notified_events', []) + [event_id])[-100:] }}"
+      value: "{{ (this.attributes.get('notified_events', []) + [event_id])[-100:] | join(',') }}"
