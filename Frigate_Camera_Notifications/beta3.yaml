@@ -114,37 +114,53 @@ action:
       alert_once: !input alert_once
       event_id: "{{ event.after.id }}"
       camera_names: >
-        {% set names = [] %}
+        {% set camera_list = [] %}
         {% for cam in cameras | expand %}
           {% set friendly_name = cam.attributes.friendly_name | default('') %}
           {% set entity_id = cam.entity_id.split('.')[1] %}
           {% set formatted_name = friendly_name if friendly_name else entity_id.replace('_', ' ').title() %}
-          {% set _ = names.append({
+          {% set camera_list = camera_list + [{
             'friendly_name': friendly_name,
             'entity_id': entity_id,
             'formatted_name': formatted_name,
             'raw': cam
-          }) %}
+          }] %}
         {% endfor %}
-        {{ names }}
+        {{ camera_list }}
       type_ok: "{{ event_type in ['new','update'] }}"
       severity_ok: "{{ severity in allowed_types }}"
       camera_ok: >
-        {% set camera_matches = [] %}
+        {% set matches = [] %}
         {% for cam in camera_names %}
           {% set match = (
             camera == cam.entity_id or
             camera_name == cam.formatted_name or
             camera == cam.friendly_name
           ) %}
-          {% set _ = camera_matches.append({
+          {% set matches = matches + [{
             'entity_id': cam.entity_id,
             'friendly_name': cam.friendly_name,
             'formatted_name': cam.formatted_name,
             'matches': match
-          }) %}
+          }] %}
         {% endfor %}
-        {{ camera_matches | selectattr('matches') | list | length > 0 }}
+        {{ matches | selectattr('matches') | list | length > 0 }}
+      camera_matches: >
+        {% set matches = [] %}
+        {% for cam in camera_names %}
+          {% set match = (
+            camera == cam.entity_id or
+            camera_name == cam.formatted_name or
+            camera == cam.friendly_name
+          ) %}
+          {% set matches = matches + [{
+            'entity_id': cam.entity_id,
+            'friendly_name': cam.friendly_name,
+            'formatted_name': cam.formatted_name,
+            'matches': match
+          }] %}
+        {% endfor %}
+        {{ matches }}
       loiter_ok: "{{ pending_loitering in allowed_loiter }}"
       first_detection: "{{ event.after.motionless_count == 1 }}"
       motionless_time: "{{ event.after.motionless_count }}"
