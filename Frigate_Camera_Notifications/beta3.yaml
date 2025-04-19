@@ -170,13 +170,9 @@ action:
   - condition: template
     value_template: "{{ type_ok and severity_ok and camera_ok and not false_positive }}"
 
-  - condition: or
-    conditions:
-      - condition: template
-        value_template: "{{ not alert_once }}"
-      - condition: template
-        value_template: >
-          {{ not (event_id in this.attributes.get('notified_events', [])) }}
+  - condition: template
+    value_template: >
+      {{ not (event_id in this.attributes.get('notified_events', [])) }}
 
   - choose:
       - alias: Send Notification
@@ -185,7 +181,7 @@ action:
             value_template: >
               {{ loiter_ok and (
                 (pending_loitering == 'true' and (first_detection or motionless_time | int > 100)) or
-                (pending_loitering == 'false')
+                (pending_loitering == 'false' and first_detection)
               ) }}
         sequence:
           - if:
@@ -227,6 +223,9 @@ action:
                 has_clip: "{{ event.after.has_clip }}"
                 has_snapshot: "{{ event.after.has_snapshot }}"
                 snapshot_time: "{{ event.after.snapshot.frame_time }}"
+                motionless_time: "{{ motionless_time }}"
+                pending_loitering: "{{ pending_loitering }}"
+                first_detection: "{{ first_detection }}"
 
   - service: automation.set_variables
     target:
