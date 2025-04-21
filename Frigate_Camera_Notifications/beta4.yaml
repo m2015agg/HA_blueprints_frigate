@@ -98,16 +98,17 @@ variables:
   notify_device: !input notify_device
   loiter_threshold: !input loiter_threshold
   motionless_threshold: !input motionless_threshold
-  base_url: "{{ (input.base_url | trim) }}"
+  base_url: !input base_url
   
   # Check if the camera is one we're monitoring
   is_watched_camera: >-
-    {% set camera_list = [] %}
+    {% set matches = [] %}
     {% for cam in cameras | expand %}
       {% set entity_id = cam.entity_id.split('.')[1] %}
-      {% set camera_list = camera_list + [entity_id] %}
+      {% set match = camera_id == entity_id %}
+      {% set matches = matches + [match] %}
     {% endfor %}
-    {{ camera_id in camera_list }}
+    {{ matches | select('equalto', true) | list | length > 0 }}
   
   # Check if we've hit the loitering threshold
   loiter_cross: >-
@@ -164,8 +165,8 @@ action:
       # Include media in the notification
       data:
         tag: "{{ event_id }}"
-        image: "{{ base_url }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
-        clickAction: "{{ base_url }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
+        image: "{{ base_url | trim }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
+        clickAction: "{{ base_url | trim }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
 
   # Update the list of seen events to prevent duplicates
   - service: input_text.set_value
