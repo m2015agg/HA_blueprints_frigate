@@ -1,7 +1,7 @@
 blueprint:
   # Blueprint metadata
   name: Hybrid Frigate Loiter & Motion Notifications
-  source_url: "https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/Beta4.yaml"
+  source_url: "https://raw.githubusercontent.com/m2015agg/HA_blueprints_frigate/main/Frigate_Camera_Notifications/beta4.yaml"
   description: >
     Notify once when Frigate reports true loitering or when an object remains
     motionless for a specified duration. Minimal UI, minimal false positives.
@@ -55,6 +55,13 @@ blueprint:
       default: true
       selector:
         boolean: {}
+        
+    mqtt_topic:
+      name: MQTT Topic
+      description: Topic where Frigate publishes detection events (usually frigate/events).
+      default: frigate/events
+      selector:
+        text: {}
 
     # URL for accessing media files (snapshots and clips)
     base_url:
