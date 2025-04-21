@@ -71,6 +71,22 @@ blueprint:
       selector:
         text: {}
 
+    # Zone-specific loitering settings
+    zone_settings:
+      name: Zone Settings (YAML)
+      description: >-
+        Optional YAML configuration for zone-specific loitering times. Example:
+        street:
+          loitering_time: 15
+        Yard:
+          loitering_time: 0
+        Garage_Zone:
+          loitering_time: 5
+      default: ""
+      selector:
+        text:
+          multiline: true
+
 # Run automation in single mode (one instance at a time)
 mode: single
 
@@ -106,9 +122,26 @@ variables:
     {% set camera_list = cameras | map('lower') | list %}
     {{ camera_name in camera_list }}
   
+  # Parse zone settings
+  zone_config: >-
+    {% if zone_settings %}
+      {{ zone_settings | from_yaml }}
+    {% else %}
+      {{ {} }}
+    {% endif %}
+  
+  # Get the current zones the object is in
+  current_zones: "{{ payload.after.current_zones }}"
+  
   # Check if we've hit the loitering threshold
   loiter_cross: >-
-    {{ status and duration >= loiter_threshold }}
+    {% set zone_time = namespace(value=loiter_threshold) %}
+    {% for zone in current_zones %}
+      {% if zone in zone_config and 'loitering_time' in zone_config[zone] %}
+        {% set zone_time.value = zone_config[zone].loitering_time %}
+      {% endif %}
+    {% endfor %}
+    {{ status and duration >= zone_time.value }}
 
   # Check if we've hit the motionless threshold
   motionless_cross: >-
