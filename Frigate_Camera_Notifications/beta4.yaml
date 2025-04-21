@@ -128,8 +128,8 @@ condition:
   # Prevent duplicate notifications using a list of seen events
   - condition: template
     value_template: >-
-      {% set seen = state_attr('input_text.frigate_notified_events','value') | default('') %}
-      {{ not (event_id in seen.split(',')) }}
+      {% set seen = states('input_text.frigate_notified_events') | default('') %}
+      {{ not (event_id in (seen | default('')).split(',') if seen else false) }}
 
 # Actions to perform when conditions are met
 action:
@@ -161,8 +161,8 @@ action:
       # Include media in the notification
       data:
         tag: "{{ event_id }}"
-        image: "{{ base_url | trim }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
-        clickAction: "{{ base_url | trim }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
+        image: "{{ base_url }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
+        clickAction: "{{ base_url }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
 
   # Update the list of seen events to prevent duplicates
   - service: input_text.set_value
