@@ -55,7 +55,7 @@ blueprint:
       default: true
       selector:
         boolean: {}
-        
+
     mqtt_topic:
       name: MQTT Topic
       description: Topic where Frigate publishes detection events (usually frigate/events).
@@ -95,16 +95,16 @@ variables:
   
   # Check if the camera is one we're monitoring
   is_watched_camera: >-
-    {{ (cameras | expand | map(attribute='entity_id') | list)
+    {{ (states(cameras) | expand | map(attribute='entity_id') | list)
        | contains('camera.' ~ camera_id) }}
   
   # Check if we've hit the loitering threshold
   loiter_cross: >-
-    {{ status == 'true' and duration >= (loiter_threshold | int) }}
-  
+    {{ status == 'true' and duration >= (states(loiter_threshold) | int) }}
+
   # Check if we've hit the motionless threshold
   motionless_cross: >-
-    {{ duration >= (motionless_threshold | int) }}
+    {{ duration >= (states(motionless_threshold) | int) }}
   
   # Combine both conditions - notify if either is true
   should_notify: >-
@@ -130,7 +130,7 @@ action:
     data:
       name: Frigate Motion Watcher
       message: >
-        Event from {{ camera_id }} — Loiter: {{ status }} — Duration: {{ duration }}s — Notify: {{ should_notify }}
+        Event from {{ camera_id }} — Loiter: {{ status }} — Duration: {{ duration }}s — Notify: {{ should_notify }} - Payload: {{ payload }}
 
   # Send mobile notification with context-aware message
   - service: mobile_app.notify
@@ -153,8 +153,8 @@ action:
       # Include media in the notification
       data:
         tag: "{{ event_id }}"
-        image: "{{ (base_url | trim) }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
-        clickAction: "{{ (base_url | trim) }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
+        image: "{{ (states(base_url) | trim) }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
+        clickAction: "{{ (states(base_url) | trim) }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
 
   # Update the list of seen events to prevent duplicates
   - service: input_text.set_value
