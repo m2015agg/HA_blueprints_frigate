@@ -1,6 +1,7 @@
 blueprint:
   # Blueprint metadata
   name: Hybrid Frigate Loiter & Motion Notifications
+  source_url: "https://github.com/m2015agg/HA_blueprints_frigate/blob/main/Frigate_Camera_Notifications/Beta4.yaml"
   description: >
     Notify once when Frigate reports true loitering or when an object remains
     motionless for a specified duration. Minimal UI, minimal false positives.
