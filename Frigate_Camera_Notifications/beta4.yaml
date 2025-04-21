@@ -1,0 +1,152 @@
+blueprint:
+  # Blueprint metadata
+  name: Hybrid Frigate Loiter & Motion Notifications
+  description: >
+    Notify once when Frigate reports true loitering or when an object remains
+    motionless for a specified duration. Minimal UI, minimal false positives.
+  domain: automation
+
+  # Input configuration section
+  input:
+    # Camera selection - allows multiple Frigate cameras to be monitored
+    cameras:
+      name: Cameras
+      selector:
+        entity:
+          integration: frigate
+          domain: camera
+          multiple: true
+
+    # Mobile device to receive notifications
+    notify_device:
+      name: Mobile Device
+      selector:
+        device:
+          integration: mobile_app
+          multiple: true
+
+    # Threshold for Frigate's built-in loitering detection
+    loiter_threshold:
+      name: Loiter Threshold (seconds)
+      description: Seconds Frigate must flag `pending_loitering` before notifying
+      default: 15
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+
+    # Threshold for raw motionless duration
+    motionless_threshold:
+      name: Motionless Threshold (seconds)
+      description: Seconds an object must remain still to notify
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+
+    # Prevent duplicate notifications for the same event
+    alert_once:
+      name: Alert Once
+      description: Only send one notification per unique event
+      default: true
+      selector:
+        boolean: {}
+
+    # URL for accessing media files (snapshots and clips)
+    base_url:
+      name: Home Assistant URL
+      description: External URL for clips/snapshots (omit trailing slash)
+      default: ""
+      selector:
+        text: {}
+
+# Run automation in single mode (one instance at a time)
+mode: single
+
+# Trigger on MQTT updates from Frigate
+trigger:
+  - platform: mqtt
+    topic: frigate/events
+    value_template: "{{ value_json.type == 'update' }}"
+    id: mqtt_update
+
+# Variables used in the automation
+variables:
+  # Extract data from the MQTT payload
+  payload: "{{ trigger.payload_json }}"
+  event_id: "{{ payload.after.id }}"
+  # Check if Frigate has flagged this as loitering
+  status: "{{ payload.after.pending_loitering | string | lower }}"
+  # Get how long the object has been motionless
+  duration: "{{ payload.after.motionless_count | int }}"
+  camera_id: "{{ payload.after.camera }}"
+  
+  # Check if the camera is one we're monitoring
+  is_watched_camera: >-
+    {{ (cameras | expand | map(attribute='entity_id') | list)
+       | contains('camera.' ~ camera_id) }}
+  
+  # Check if we've hit the loitering threshold
+  loiter_cross: >-
+    {{ status == 'true' and duration >= (loiter_threshold | int) }}
+  
+  # Check if we've hit the motionless threshold
+  motionless_cross: >-
+    {{ duration >= (motionless_threshold | int) }}
+  
+  # Combine both conditions - notify if either is true
+  should_notify: >-
+    {{ (loiter_cross or motionless_cross) }}
+
+# Conditions that must be met to trigger the action
+condition:
+  # Only notify for watched cameras and when thresholds are met
+  - condition: template
+    value_template: >-
+      {{ is_watched_camera and should_notify }}
+
+  # Prevent duplicate notifications using a list of seen events
+  - condition: template
+    value_template: >-
+      {% set seen = state_attr('input_text.frigate_notified_events','value') | default('') %}
+      {{ not (event_id in seen.split(',')) }}
+
+# Actions to perform when conditions are met
+action:
+  # Send mobile notification with context-aware message
+  - service: mobile_app.notify
+    data:
+      device_id: !input notify_device
+      # Different title based on which condition triggered
+      title: >-
+        {% if loiter_cross %}
+          Loitering detected on {{ camera_id }}
+        {% else %}
+          Extended presence on {{ camera_id }}
+        {% endif %}
+      # Different message based on which condition triggered
+      message: >-
+        {% if loiter_cross %}
+          Object loitering for {{ duration }}s on {{ camera_id }}.
+        {% else %}
+          Object stationary for {{ duration }}s on {{ camera_id }}.
+        {% endif %}
+      # Include media in the notification
+      data:
+        tag: "{{ event_id }}"
+        image: "{{ (base_url | trim) }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
+        clickAction: "{{ (base_url | trim) }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
+
+  # Update the list of seen events to prevent duplicates
+  - service: input_text.set_value
+    target:
+      entity_id: input_text.frigate_notified_events
+    data:
+      # Keep only the last 100 events to prevent the list from growing too large
+      value: >-
+        {% set seen = (state_attr('input_text.frigate_notified_events','value')
+                       | default('')).split(',') %}
+        {{ (seen + [event_id])[-100:] | join(',') }}
