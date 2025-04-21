@@ -68,10 +68,11 @@ mode: single
 
 # Trigger on MQTT updates from Frigate
 trigger:
-  - platform: mqtt
-    topic: frigate/events
-    value_template: "{{ value_json.type == 'update' }}"
-    id: mqtt_update
+  platform: mqtt
+  topic: !input mqtt_topic
+  id: frigate-event
+  value_template: "{{ value_json.type in ['new','update'] }}"
+
 
 # Variables used in the automation
 variables:
