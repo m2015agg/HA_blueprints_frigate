@@ -88,9 +88,9 @@ variables:
   payload: "{{ trigger.payload_json }}"
   event_id: "{{ payload.after.id }}"
   # Check if Frigate has flagged this as loitering
-  status: "{{ payload.after.pending_loitering | string | lower }}"
+  status: "{{ payload.after.pending_loitering }}"
   # Get how long the object has been motionless
-  duration: "{{ payload.after.motionless_count | int }}"
+  duration: "{{ payload.after.motionless_count }}"
   camera_id: "{{ payload.after.camera }}"
   
   # Get input variables
@@ -104,15 +104,15 @@ variables:
   is_watched_camera: >-
     {% set matches = [] %}
     {% for cam in cameras | expand %}
-      {% set entity_id = cam.entity_id.split('.')[1] %}
-      {% set match = camera_id == entity_id %}
+      {% set entity_id = cam.entity_id.split('.')[1] | lower %}
+      {% set match = camera_id | lower == entity_id %}
       {% set matches = matches + [match] %}
     {% endfor %}
     {{ matches | select('equalto', true) | list | length > 0 }}
   
   # Check if we've hit the loitering threshold
   loiter_cross: >-
-    {{ status == 'true' and duration >= loiter_threshold }}
+    {{ status and duration >= loiter_threshold }}
 
   # Check if we've hit the motionless threshold
   motionless_cross: >-
