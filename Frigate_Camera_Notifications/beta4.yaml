@@ -141,28 +141,26 @@ action:
         Event from {{ camera_id }} — Loiter: {{ status }} — Duration: {{ duration }}s — Notify: {{ should_notify }} - Payload: {{ payload }}
 
   # Send mobile notification with context-aware message
-  - service: mobile_app.notify
-    data:
+  - service: notify.mobile_app
+    target:
       device_id: !input notify_device
-      # Different title based on which condition triggered
+    data:
       title: >-
         {% if loiter_cross %}
           Loitering detected on {{ camera_id }}
         {% else %}
           Extended presence on {{ camera_id }}
         {% endif %}
-      # Different message based on which condition triggered
       message: >-
         {% if loiter_cross %}
           Object loitering for {{ duration }}s on {{ camera_id }}.
         {% else %}
           Object stationary for {{ duration }}s on {{ camera_id }}.
         {% endif %}
-      # Include media in the notification
       data:
         tag: "{{ event_id }}"
-        image: "{{ base_url }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
-        clickAction: "{{ base_url }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
+        image: "{{ base_url if base_url else '' }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
+        clickAction: "{{ base_url if base_url else '' }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
 
   # Update the list of seen events to prevent duplicates
   - service: input_text.set_value
