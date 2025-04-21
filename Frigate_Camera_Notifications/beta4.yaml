@@ -103,8 +103,8 @@ variables:
   # Check if the camera is one we're monitoring
   is_watched_camera: >-
     {% set matches = [] %}
-    {% for cam in cameras | expand %}
-      {% set entity_id = cam.entity_id.split('.')[1] | lower %}
+    {% for cam in cameras %}
+      {% set entity_id = cam.split('.')[1] | lower %}
       {% set match = camera_id | lower == entity_id %}
       {% set matches = matches + [match] %}
     {% endfor %}
