@@ -116,6 +116,13 @@ condition:
 
 # Actions to perform when conditions are met
 action:
+  # Log debug information about the event
+  - service: logbook.log
+    data:
+      name: Frigate Motion Watcher
+      message: >
+        Event from {{ camera_id }} — Loiter: {{ status }} — Duration: {{ duration }}s — Notify: {{ should_notify }}
+
   # Send mobile notification with context-aware message
   - service: mobile_app.notify
     data:
