@@ -95,16 +95,16 @@ variables:
   
   # Check if the camera is one we're monitoring
   is_watched_camera: >-
-    {{ (input.cameras | expand | map(attribute='entity_id') | list)
-       | contains('camera.' ~ camera_id) }}
+    {% set camera_list = input.cameras | map(attribute='entity_id') | list %}
+    {{ 'camera.' ~ camera_id in camera_list }}
   
   # Check if we've hit the loitering threshold
   loiter_cross: >-
-    {{ status == 'true' and duration >= (input.loiter_threshold | int) }}
+    {{ status == 'true' and duration >= input.loiter_threshold }}
 
   # Check if we've hit the motionless threshold
   motionless_cross: >-
-    {{ duration >= (input.motionless_threshold | int) }}
+    {{ duration >= input.motionless_threshold }}
   
   # Combine both conditions - notify if either is true
   should_notify: >-
@@ -153,8 +153,8 @@ action:
       # Include media in the notification
       data:
         tag: "{{ event_id }}"
-        image: "{{ (input.base_url | trim) }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
-        clickAction: "{{ (input.base_url | trim) }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
+        image: "{{ input.base_url | trim }}/api/frigate/notifications/{{ event_id }}/snapshot.jpg"
+        clickAction: "{{ input.base_url | trim }}/api/frigate/notifications/{{ event_id }}/clip.mp4"
 
   # Update the list of seen events to prevent duplicates
   - service: input_text.set_value
