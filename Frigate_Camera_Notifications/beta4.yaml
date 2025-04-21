@@ -102,14 +102,9 @@ variables:
   
   # Check if the camera is one we're monitoring
   is_watched_camera: >-
-    {% set camera_name = camera_id | lower %}
-    {% set matches = [] %}
-    {% for cam in cameras %}
-      {% if cam.split('.')[1] | lower == camera_name %}
-        {% set matches = matches + [true] %}
-      {% endif %}
-    {% endfor %}
-    {{ matches | length > 0 }}
+    {% set camera_name = 'camera.' ~ camera_id | lower %}
+    {% set camera_list = cameras | map('lower') | list %}
+    {{ camera_name in camera_list }}
   
   # Check if we've hit the loitering threshold
   loiter_cross: >-
